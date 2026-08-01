@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contador de palabras — multiidioma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#EAF3FC; --bg-2:#F7FBFE;
+    --bg-panel:#FFFFFF; --bg-panel-2:#F1F8FD;
+    --ink:#2B3E52; --ink-soft:#5D7690; --ink-faint:#9AB0C4;
+    --border:#DCEBF7;
+    --accent:#4A90E2; --accent-soft:#EAF2FC; --accent-ink:#FFFFFF;
+    --accent-2:#5FB3A3; --danger:#D97B6C; --danger-bg:#FDEEEA;
+    --radius:18px; --radius-sm:12px; --radius-pill:999px;
+    --shadow:0 10px 30px rgba(74,144,226,.10);
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+    --sans:'Nunito', system-ui, -apple-system, sans-serif;
+    --display:'Quicksand', var(--sans);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:40px 24px 72px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before, body::after{
+    content:""; position:fixed; border-radius:50%; filter:blur(60px); z-index:0; pointer-events:none;
+  }
+  body::before{width:420px; height:420px; top:-140px; right:-100px; background:radial-gradient(circle, rgba(95,179,163,.20), transparent 70%);}
+  body::after{width:480px; height:480px; bottom:-180px; left:-140px; background:radial-gradient(circle, rgba(74,144,226,.16), transparent 70%);}
+  .wrap{max-width:1120px;margin:0 auto; position:relative; z-index:1;}
+
+  header.top{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:30px; flex-wrap:wrap;}
+  .eyebrow{
+    font-family:var(--sans); font-weight:700; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent-2); margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--display); font-weight:700; font-size:clamp(28px,3.6vw,40px);
+    margin:0; letter-spacing:-.01em; line-height:1.1; color:var(--ink);
+  }
+  .top-meta{font-family:var(--sans); font-weight:600; font-size:13px; color:var(--ink-soft); text-align:right; max-width:280px; line-height:1.5;}
+
+  .grid{display:grid; grid-template-columns:1.15fr .85fr; gap:22px;}
+  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px; position:relative; box-shadow:var(--shadow);
+  }
+
+  .panel-label{
+    font-family:var(--sans); font-weight:700; font-size:12.5px; letter-spacing:.02em;
+    color:var(--ink-soft); display:flex; justify-content:space-between; margin-bottom:12px;
+  }
+  .panel-label .cap{color:var(--ink-faint); font-weight:600;}
+  .panel-label .cap.warn{color:var(--danger);}
+
+  textarea{
+    width:100%; min-height:360px; resize:vertical; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--bg-panel-2); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.7;
+    padding:16px; outline:none; transition:box-shadow .2s ease, border-color .2s ease;
+  }
+  textarea::placeholder{color:var(--ink-faint);}
+  textarea:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft);}
+
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:center;}
+  button, select{
+    font-family:var(--sans); font-weight:700; font-size:13px; color:var(--ink);
+    background:var(--bg-panel-2); border:1px solid var(--border); border-radius:var(--radius-pill);
+    padding:9px 16px; cursor:pointer; transition:background .15s ease, transform .1s ease;
+  }
+  button:hover{background:var(--accent-soft); border-color:var(--accent);}
+  button:active{transform:translateY(1px) scale(.98);}
+  button.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+  button.primary:hover{background:#3E82D6;}
+  button.ghost{background:transparent;}
+  input[type=file]{display:none;}
+  select{appearance:none;}
+
+  .specimen{
+    display:flex; align-items:center; gap:14px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:12px 14px; background:var(--bg-panel-2); margin-bottom:18px; min-height:56px;
+  }
+  .specimen .glyphs{display:flex; gap:7px; font-family:var(--display); font-weight:600; font-size:19px; color:var(--accent);}
+  .specimen .glyphs span{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:50%; background:var(--accent-soft);
+  }
+  .specimen .meta{font-family:var(--sans); font-size:12px; font-weight:600; color:var(--ink-soft); line-height:1.5;}
+  .specimen .meta b{color:var(--ink); font-size:13.5px; display:block; font-family:var(--display); font-weight:700;}
+
+  .hero{display:flex; align-items:baseline; gap:10px; margin-bottom:20px;}
+  .hero .num{font-family:var(--display); font-weight:700; font-size:58px; letter-spacing:-.02em; line-height:1; color:var(--accent); font-variant-numeric:tabular-nums;}
+  .hero .lbl{font-family:var(--sans); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+
+  .stats{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .stat{background:var(--bg-panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px;}
+  .stat .v{font-family:var(--sans); font-size:19px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
+  .stat .k{font-family:var(--sans); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); margin-top:3px;}
+
+  .freq{margin-top:20px;}
+  .freq-row{display:grid; grid-template-columns:88px 1fr 32px; align-items:center; gap:10px; margin-bottom:8px; font-family:var(--sans); font-size:12.5px; font-weight:600;}
+  .freq-row .w{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);}
+  .freq-bar-track{height:9px; background:var(--bg-panel-2); border-radius:var(--radius-pill); overflow:hidden;}
+  .freq-bar{height:100%; background:var(--accent-2); border-radius:var(--radius-pill);}
+  .freq-row .n{color:var(--ink-faint); text-align:right;}
+
+  .foot-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;}
+
+  .warning{
+    font-family:var(--sans); font-weight:600; font-size:12.5px; color:#A6503F; background:var(--danger-bg);
+    border:1px solid rgba(217,123,108,.35); border-radius:var(--radius-sm); padding:10px 12px; margin-top:10px; display:none;
+  }
+  .warning.show{display:block;}
+  .file-status{font-family:var(--sans); font-weight:600; font-size:12px; color:var(--ink-faint); align-self:center;}
+  .file-status.err{color:var(--danger);}
+
+  ::selection{background:var(--accent-soft); color:var(--accent);}
+  @media (prefers-reduced-motion:no-preference){
+    .hero .num, .stat .v{transition:opacity .15s ease;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Multiidioma · en tiempo real</p>
+      <h1>Contador de palabras</h1>
+    </div>
+    <div class="top-meta">100% local en tu navegador.<br>Ningún texto sale de este dispositivo.</div>
+  </header>
+
+  <div class="grid">
+
+    <!-- INPUT -->
+    <section class="panel">
+      <div class="panel-label">
+        <span>Texto de entrada</span>
+        <span class="cap" id="capLabel">0 / 500.000</span>
+      </div>
+      <textarea id="input" dir="auto" spellcheck="false" placeholder="Pega o escribe texto en cualquier idioma o escritura — latino, cirílico, árabe, hebreo, devanagari, han, kana, hangul, tailandés, lao, jemer, birmano…"></textarea>
+      <div class="toolbar">
+        <button class="ghost" id="btnImport" title="Admite .txt, .docx, .pdf">Importar archivo</button>
+        <input type="file" id="fileInput" accept=".txt,.docx,.pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf">
+        <span class="file-status" id="fileStatus"></span>
+        <button class="ghost" id="btnClear">Vaciar</button>
+        <select id="localeSelect" title="Forzar escritura/idioma para la segmentación">
+          <option value="auto">Auto-detectar escritura</option>
+          <option value="en">Latino — genérico (en)</option>
+          <option value="es">Latino — español (es)</option>
+          <option value="ja">Japonés — Han+Kana (ja)</option>
+          <option value="zh">Chino — Han (zh)</option>
+          <option value="ko">Coreano — Hangul (ko)</option>
+          <option value="th">Tailandés (th)</option>
+          <option value="lo">Lao (lo)</option>
+          <option value="km">Jemer (km)</option>
+          <option value="my">Birmano (my)</option>
+          <option value="ar">Árabe (ar)</option>
+          <option value="he">Hebreo (he)</option>
+          <option value="hi">Hindi — Devanagari (hi)</option>
+          <option value="ru">Ruso — cirílico (ru)</option>
+          <option value="el">Griego (el)</option>
+        </select>
+        <select id="wpmSelect" title="Velocidad de lectura de referencia">
+          <option value="0.75">Lectura lenta</option>
+          <option value="1" selected>Lectura normal</option>
+          <option value="1.3">Lectura rápida</option>
+        </select>
+      </div>
+      <div class="warning" id="warnBanner"></div>
+    </section>
+
+    <!-- OUTPUT -->
+    <section class="panel">
+      <div class="panel-label"><span>Resumen</span><span class="cap" id="engineLabel">Intl.Segmenter</span></div>
+
+      <div class="specimen" id="specimen">
+        <div class="glyphs" id="specimenGlyphs"><span>A</span><span>a</span><span>É</span><span>&</span></div>
+        <div class="meta"><b id="specimenName">Latino · genérico</b><span id="specimenLocale">auto → en · dir ltr</span></div>
+      </div>
+
+      <div class="hero"><span class="num" id="statWords">0</span><span class="lbl">palabras</span></div>
+
+      <div class="stats">
+        <div class="stat"><div class="v" id="statChars">0</div><div class="k">Caracteres</div></div>
+        <div class="stat"><div class="v" id="statCharsNS">0</div><div class="k">Sin espacios</div></div>
+        <div class="stat"><div class="v" id="statSentences">0</div><div class="k">Oraciones</div></div>
+        <div class="stat"><div class="v" id="statParas">0</div><div class="k">Párrafos</div></div>
+        <div class="stat"><div class="v" id="statUnique">0</div><div class="k">Palabras únicas</div></div>
+        <div class="stat"><div class="v" id="statDensity">0%</div><div class="k">Densidad léxica</div></div>
+        <div class="stat"><div class="v" id="statAvgLen">0</div><div class="k">Long. media/palabra</div></div>
+        <div class="stat"><div class="v" id="statReadTime">0 min</div><div class="k">Lectura</div></div>
+        <div class="stat"><div class="v" id="statSpeakTime">0 min</div><div class="k">Habla</div></div>
+      </div>
+
+      <div class="freq" id="freqWrap">
+        <div class="panel-label" style="margin-top:16px;"><span>Top tokens</span><span class="cap">frecuencia</span></div>
+        <div id="freqList"></div>
+      </div>
+
+      <div class="foot-actions">
+        <button class="primary" id="btnCopy">Copiar JSON</button>
+        <button class="ghost" id="btnDownload">Descargar informe .txt</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const MAX_CHARS = 500000;    // límite duro de proceso de texto
+  const SOFT_WARN = 200000;    // aviso de rendimiento
+  const MAX_TXT_BYTES = 5 * 1024 * 1024;   // 5MB para .txt
+  const MAX_DOC_BYTES = 20 * 1024 * 1024;  // 20MB para .docx/.pdf
+  const MAX_PDF_PAGES = 500;   // cota anti "PDF bomb"
+
+  // Versiones fijadas (no "latest") — mitiga parcialmente riesgo de supply-chain.
+  // Producción: self-host + Subresource Integrity (SRI) sobre estos dos ficheros.
+  const MAMMOTH_URL = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js';
+  const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.min.mjs';
+  const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.min.mjs';
+
+  const $ = id => document.getElementById(id);
+  const input = $('input'), localeSelect = $('localeSelect'), wpmSelect = $('wpmSelect');
+  const capLabel = $('capLabel'), warnBanner = $('warnBanner');
+
+  const SUPPORTS_SEGMENTER = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function';
+  if (!SUPPORTS_SEGMENTER){
+    warnBanner.textContent = 'Este navegador no soporta Intl.Segmenter. Usando aproximación por espacios en blanco (menos precisa para CJK/Thai/Lao/Khmer).';
+    warnBanner.classList.add('show');
+  }
+
+  // ---- detección de escritura por rango Unicode (sin libs externas, sin llamadas de red) ----
+  const SCRIPT_RANGES = [
+    ['han', /[\u4E00-\u9FFF\u3400-\u4DBF]/g],
+    ['hiragana', /[\u3040-\u309F]/g],
+    ['katakana', /[\u30A0-\u30FF]/g],
+    ['hangul', /[\uAC00-\uD7A3]/g],
+    ['thai', /[\u0E00-\u0E7F]/g],
+    ['lao', /[\u0E80-\u0EFF]/g],
+    ['khmer', /[\u1780-\u17FF]/g],
+    ['myanmar', /[\u1000-\u109F]/g],
+    ['arabic', /[\u0600-\u06FF\u0750-\u077F]/g],
+    ['hebrew', /[\u0590-\u05FF]/g],
+    ['devanagari', /[\u0900-\u097F]/g],
+    ['cyrillic', /[\u0400-\u04FF]/g],
+    ['greek', /[\u0370-\u03FF]/g],
+    ['latin', /[A-Za-zÀ-ÖØ-öø-ÿĀ-ɏ]/g],
+  ];
+
+  const SPECIMENS = {
+    en:{name:'Latino · genérico', glyphs:['A','a','É','&'], rtl:false, charBased:false},
+    es:{name:'Latino · español', glyphs:['A','ñ','¿','Á'], rtl:false, charBased:false},
+    ja:{name:'Japonés · Han + Kana', glyphs:['字','あ','ア','漢'], rtl:false, charBased:true},
+    zh:{name:'Chino · Han', glyphs:['字','文','语','中'], rtl:false, charBased:true},
+    ko:{name:'Coreano · Hangul', glyphs:['한','글','국','어'], rtl:false, charBased:true},
+    th:{name:'Tailandés', glyphs:['ก','ฎ','ท','๐'], rtl:false, charBased:true},
+    lo:{name:'Lao', glyphs:['ກ','ຂ','ງ','ລ'], rtl:false, charBased:true},
+    km:{name:'Jemer', glyphs:['ក','ខ','គ','ឃ'], rtl:false, charBased:true},
+    my:{name:'Birmano', glyphs:['က','ခ','ဂ','ဃ'], rtl:false, charBased:true},
+    ar:{name:'Árabe', glyphs:['ا','ب','ت','ث'], rtl:true, charBased:false},
+    he:{name:'Hebreo', glyphs:['א','ב','ג','ד'], rtl:true, charBased:false},
+    hi:{name:'Hindi · Devanagari', glyphs:['क','ख','ग','ह'], rtl:false, charBased:false},
+    ru:{name:'Ruso · cirílico', glyphs:['А','Б','В','Я'], rtl:false, charBased:false},
+    el:{name:'Griego', glyphs:['Α','Β','Γ','Ω'], rtl:false, charBased:false},
+  };
+
+  function detectLocale(sample){
+    const counts = {};
+    for (const [name, re] of SCRIPT_RANGES){
+      const m = sample.match(re);
+      counts[name] = m ? m.length : 0;
+    }
+    if (counts.hiragana > 0 || counts.katakana > 0) return 'ja';
+    if (counts.han > 3) return 'zh';
+    if (counts.hangul > 3) return 'ko';
+    if (counts.thai > 3) return 'th';
+    if (counts.lao > 3) return 'lo';
+    if (counts.khmer > 3) return 'km';
+    if (counts.myanmar > 3) return 'my';
+    if (counts.arabic > 3) return 'ar';
+    if (counts.hebrew > 3) return 'he';
+    if (counts.devanagari > 3) return 'hi';
+    if (counts.cyrillic > 3) return 'ru';
+    if (counts.greek > 3) return 'el';
+    return 'en';
+  }
+
+  // ---- núcleo de análisis, compartido entre el fallback síncrono y el Worker ----
+  // (se serializa a texto plano para inyectarse también dentro del Worker; ver WORKER_SRC)
+  const ANALYZE_CORE_SRC = [
+    'function analyzeCore(text, locale, wpmFactor, charBased, supportsSegmenter){',
+    '  if (!text){',
+    '    return {words:0, chars:0, charsNS:0, sentences:0, paras:0, unique:0, density:0, avgLen:0, readMin:0, speakMin:0, top:[]};',
+    '  }',
+    '  var words = 0, chars = 0, sentences = 0, uniqueSet = new Set(), totalWordLen = 0;',
+    '  var freq = new Map();',
+    '  if (supportsSegmenter){',
+    '    var graphemeSeg = new Intl.Segmenter(locale, {granularity:"grapheme"});',
+    '    var g; for (g of graphemeSeg.segment(text)) chars++;',
+    '    var wordSeg = new Intl.Segmenter(locale, {granularity:"word"});',
+    '    var w; for (w of wordSeg.segment(text)){',
+    '      if (w.isWordLike){',
+    '        words++;',
+    '        totalWordLen += [...w.segment].length;',
+    '        var key = w.segment.toLowerCase();',
+    '        uniqueSet.add(key);',
+    '        freq.set(key, (freq.get(key) || 0) + 1);',
+    '      }',
+    '    }',
+    '    var sentSeg = new Intl.Segmenter(locale, {granularity:"sentence"});',
+    '    var s; for (s of sentSeg.segment(text)){ if (s.segment.trim().length > 0) sentences++; }',
+    '  } else {',
+    '    chars = [...text].length;',
+    '    var tokens = text.trim().split(/\\s+/).filter(Boolean);',
+    '    words = tokens.length;',
+    '    for (var i=0;i<tokens.length;i++){',
+    '      var t = tokens[i];',
+    '      totalWordLen += t.length;',
+    '      var k2 = t.toLowerCase();',
+    '      uniqueSet.add(k2);',
+    '      freq.set(k2, (freq.get(k2) || 0) + 1);',
+    '    }',
+    '    sentences = (text.match(/[.!?¡¿。！？]+/g) || []).length || (text.trim() ? 1 : 0);',
+    '  }',
+    '  var charsNS = chars - (text.match(/\\s/g) || []).length;',
+    '  var paras = text.split(/\\n\\s*\\n+/).map(function(p){return p.trim();}).filter(Boolean).length || (text.trim() ? 1 : 0);',
+    '  var unique = uniqueSet.size;',
+    '  var density = words ? Math.round((unique / words) * 100) : 0;',
+    '  var avgLen = words ? +(totalWordLen / words).toFixed(1) : 0;',
+    '  var readBase = charBased ? (charsNS / 300) : (words / 200);',
+    '  var readMin = Math.max(readBase / wpmFactor, (words || charsNS) ? 0.1 : 0);',
+    '  var speakMin = Math.max((words || charsNS * 0.5) / 130, 0);',
+    '  var top = [...freq.entries()].sort(function(a,b){return b[1]-a[1];}).slice(0, 6);',
+    '  return {words:words, chars:chars, charsNS:charsNS, sentences:sentences, paras:paras, unique:unique,',
+    '    density:density, avgLen:avgLen,',
+    '    readMin: Math.ceil(readMin) || (text.trim() ? 1 : 0),',
+    '    speakMin: Math.ceil(speakMin) || (text.trim() ? 1 : 0), top:top};',
+    '}'
+  ].join('\n');
+
+  // Fallback en hilo principal — función real, no generada vía eval/Function()
+  // (evita depender de 'unsafe-eval' en la CSP del host; solo se usa si el Worker falla).
+  function analyzeSync(text, locale, wpmFactor, charBased, supportsSegmenter){
+    if (!text){
+      return {words:0, chars:0, charsNS:0, sentences:0, paras:0, unique:0, density:0, avgLen:0, readMin:0, speakMin:0, top:[]};
+    }
+    let words = 0, chars = 0, sentences = 0, uniqueSet = new Set(), totalWordLen = 0;
+    const freq = new Map();
+    if (supportsSegmenter){
+      const graphemeSeg = new Intl.Segmenter(locale, {granularity:'grapheme'});
+      for (const _ of graphemeSeg.segment(text)) chars++;
+      const wordSeg = new Intl.Segmenter(locale, {granularity:'word'});
+      for (const {segment, isWordLike} of wordSeg.segment(text)){
+        if (isWordLike){
+          words++;
+          totalWordLen += [...segment].length;
+          const key = segment.toLowerCase();
+          uniqueSet.add(key);
+          freq.set(key, (freq.get(key) || 0) + 1);
+        }
+      }
+      const sentSeg = new Intl.Segmenter(locale, {granularity:'sentence'});
+      for (const {segment} of sentSeg.segment(text)){
+        if (segment.trim().length > 0) sentences++;
+      }
+    } else {
+      chars = [...text].length;
+      const tokens = text.trim().split(/\s+/).filter(Boolean);
+      words = tokens.length;
+      for (const t of tokens){
+        totalWordLen += t.length;
+        const key = t.toLowerCase();
+        uniqueSet.add(key);
+        freq.set(key, (freq.get(key) || 0) + 1);
+      }
+      sentences = (text.match(/[.!?¡¿。！？]+/g) || []).length || (text.trim() ? 1 : 0);
+    }
+    const charsNS = chars - (text.match(/\s/g) || []).length;
+    const paras = text.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean).length || (text.trim() ? 1 : 0);
+    const unique = uniqueSet.size;
+    const density = words ? Math.round((unique / words) * 100) : 0;
+    const avgLen = words ? +(totalWordLen / words).toFixed(1) : 0;
+    const readBase = charBased ? (charsNS / 300) : (words / 200);
+    const readMin = Math.max(readBase / wpmFactor, (words || charsNS) ? 0.1 : 0);
+    const speakMin = Math.max((words || charsNS * 0.5) / 130, 0);
+    const top = [...freq.entries()].sort((a,b) => b[1]-a[1]).slice(0, 6);
+    return {words, chars, charsNS, sentences, paras, unique, density, avgLen,
+      readMin: Math.ceil(readMin) || (text.trim() ? 1 : 0),
+      speakMin: Math.ceil(speakMin) || (text.trim() ? 1 : 0), top};
+  }
+
+  // ---- Worker aislado: el conteo nunca bloquea el hilo de UI ----
+  const WORKER_SRC = ANALYZE_CORE_SRC + '\n' + [
+    'self.onmessage = function(e){',
+    '  var d = e.data;',
+    '  var supportsSegmenter = typeof Intl !== "undefined" && typeof Intl.Segmenter === "function";',
+    '  var r = analyzeCore(d.text, d.locale, d.wpmFactor, d.charBased, supportsSegmenter);',
+    '  r.reqId = d.reqId; r.locale = d.locale;',
+    '  self.postMessage(r);',
+    '};'
+  ].join('\n');
+
+  let worker = null, workerReady = false, reqCounter = 0, latestReqId = 0;
+  try {
+    const blob = new Blob([WORKER_SRC], {type:'application/javascript'});
+    worker = new Worker(URL.createObjectURL(blob));
+    worker.onmessage = (e) => {
+      const r = e.data;
+      if (r.reqId !== latestReqId) return; // descarta respuestas obsoletas (usuario siguió tecleando)
+      lastResult = r;
+      render(r);
+    };
+    worker.onerror = (err) => {
+      console.error('Worker de análisis falló, degradando a hilo principal:', err.message);
+      workerReady = false;
+    };
+    workerReady = true;
+  } catch(err){
+    console.warn('Web Worker no disponible, usando cálculo síncrono en hilo principal.', err);
+  }
+  $('engineLabel').textContent = 'Intl.Segmenter · ' + (workerReady ? 'Worker' : 'hilo principal');
+
+  // ---- render (siempre vía textContent — nunca innerHTML con texto del usuario) ----
+  function setSpecimen(locale, auto){
+    const spec = SPECIMENS[locale] || SPECIMENS.en;
+    const glyphsBox = $('specimenGlyphs');
+    glyphsBox.innerHTML = '';
+    spec.glyphs.forEach(g => {
+      const span = document.createElement('span');
+      span.textContent = g; // glifos estáticos curados, no derivados del input
+      glyphsBox.appendChild(span);
+    });
+    $('specimenName').textContent = spec.name;
+    $('specimenLocale').textContent = (auto ? 'auto → ' : 'manual → ') + locale + ' · dir ' + (spec.rtl ? 'rtl' : 'ltr');
+    document.getElementById('input').dir = spec.rtl ? 'rtl' : 'auto';
+  }
+
+  function fmt(n){ return n.toLocaleString('es-ES'); }
+
+  function render(r){
+    $('statWords').textContent = fmt(r.words);
+    $('statChars').textContent = fmt(r.chars);
+    $('statCharsNS').textContent = fmt(r.charsNS);
+    $('statSentences').textContent = fmt(r.sentences);
+    $('statParas').textContent = fmt(r.paras);
+    $('statUnique').textContent = fmt(r.unique);
+    $('statDensity').textContent = r.density + '%';
+    $('statAvgLen').textContent = r.avgLen;
+    $('statReadTime').textContent = r.readMin + ' min';
+    $('statSpeakTime').textContent = r.speakMin + ' min';
+
+    const freqList = $('freqList');
+    freqList.innerHTML = '';
+    const maxCount = r.top.length ? r.top[0][1] : 1;
+    r.top.forEach(([word, count]) => {
+      const row = document.createElement('div');
+      row.className = 'freq-row';
+
+      const w = document.createElement('div');
+      w.className = 'w'; w.textContent = word;
+
+      const track = document.createElement('div');
+      track.className = 'freq-bar-track';
+      const bar = document.createElement('div');
+      bar.className = 'freq-bar';
+      bar.style.width = Math.max(6, Math.round((count / maxCount) * 100)) + '%';
+      track.appendChild(bar);
+
+      const n = document.createElement('div');
+      n.className = 'n'; n.textContent = count;
+
+      row.appendChild(w); row.appendChild(track); row.appendChild(n);
+      freqList.appendChild(row);
+    });
+  }
+
+  // ---- ciclo principal con debounce ----
+  let debounceTimer = null;
+  let lastResult = null;
+
+  function process(){
+    let text = input.value;
+    if (text.length > MAX_CHARS){
+      text = text.slice(0, MAX_CHARS);
+      input.value = text;
+    }
+
+    capLabel.textContent = fmt(text.length) + ' / ' + fmt(MAX_CHARS);
+    capLabel.classList.toggle('warn', text.length > SOFT_WARN);
+    warnBanner.classList.toggle('show', text.length > SOFT_WARN && SUPPORTS_SEGMENTER);
+    if (text.length > SOFT_WARN && SUPPORTS_SEGMENTER){
+      warnBanner.textContent = 'Texto grande (' + fmt(text.length) + ' car.) — el cálculo puede tardar unos milisegundos más.';
+    }
+
+    const manual = localeSelect.value !== 'auto';
+    const sample = text.slice(0, 4000);
+    const locale = manual ? localeSelect.value : detectLocale(sample);
+    setSpecimen(locale, !manual);
+
+    const wpmFactor = parseFloat(wpmSelect.value);
+    const spec = SPECIMENS[locale] || SPECIMENS.en;
+    latestReqId = ++reqCounter;
+
+    if (workerReady){
+      worker.postMessage({text, locale, wpmFactor, charBased: spec.charBased, reqId: latestReqId});
+    } else {
+      const r = analyzeSync(text, locale, wpmFactor, spec.charBased, SUPPORTS_SEGMENTER);
+      r.locale = locale;
+      lastResult = r;
+      render(r);
+    }
+  }
+
+  function debouncedProcess(){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(process, 150);
+  }
+
+  input.addEventListener('input', debouncedProcess);
+  localeSelect.addEventListener('change', process);
+  wpmSelect.addEventListener('change', process);
+
+  $('btnClear').addEventListener('click', () => { input.value = ''; process(); input.focus(); });
+
+  function setFileStatus(msg, isError){
+    const el = $('fileStatus');
+    el.textContent = msg || '';
+    el.classList.toggle('err', !!isError);
+  }
+
+  // Carga perezosa: el código de terceros solo entra en la página si el usuario
+  // realmente importa ese tipo de archivo (superficie de ataque mínima por defecto).
+  let mammothLoadPromise = null;
+  function loadMammoth(){
+    if (window.mammoth) return Promise.resolve();
+    if (mammothLoadPromise) return mammothLoadPromise;
+    mammothLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = MAMMOTH_URL; s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('No se pudo cargar el motor .docx (mammoth.js).'));
+      document.head.appendChild(s);
+    });
+    return mammothLoadPromise;
+  }
+
+  let pdfjsLibPromise = null;
+  function loadPdfjs(){
+    if (pdfjsLibPromise) return pdfjsLibPromise;
+    pdfjsLibPromise = import(/* webpackIgnore: true */ PDFJS_URL).then(lib => {
+      lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      return lib;
+    });
+    return pdfjsLibPromise;
+  }
+
+  async function handleDocx(file){
+    setFileStatus('Cargando motor .docx…');
+    await loadMammoth();
+    setFileStatus('Extrayendo texto…');
+    const buf = await file.arrayBuffer();
+    // extractRawText: solo texto de document.xml — no procesa macros/VBA ni objetos OLE incrustados.
+    const res = await window.mammoth.extractRawText({arrayBuffer: buf});
+    input.value = res.value.slice(0, MAX_CHARS);
+    setFileStatus('Importado ✓' + (res.messages && res.messages.length ? ' (con avisos de formato)' : ''));
+  }
+
+  async function handlePdf(file){
+    setFileStatus('Cargando motor .pdf…');
+    const pdfjsLib = await loadPdfjs();
+    setFileStatus('Extrayendo texto…');
+    const buf = await file.arrayBuffer();
+    // getDocument + getTextContent: solo capa de extracción de texto. No se carga el
+    // visor/canvas ni la sandbox de JavaScript embebido (pdf.sandbox.mjs nunca se importa),
+    // así que cualquier /JavaScript o /OpenAction del PDF queda sin ejecutar.
+    const doc = await pdfjsLib.getDocument({data: buf}).promise;
+    const pageCount = Math.min(doc.numPages, MAX_PDF_PAGES);
+    const out = [];
+    for (let i = 1; i <= pageCount; i++){
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      out.push(content.items.map(it => it.str).join(' '));
+      if (i % 15 === 0) setFileStatus('Extrayendo texto… página ' + i + '/' + pageCount);
+    }
+    input.value = out.join('\n\n').slice(0, MAX_CHARS);
+    setFileStatus(doc.numPages > MAX_PDF_PAGES
+      ? ('Truncado a ' + MAX_PDF_PAGES + ' de ' + doc.numPages + ' páginas.')
+      : 'Importado ✓');
+  }
+
+  $('btnImport').addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    setFileStatus('Leyendo archivo…');
+    try {
+      if (name.endsWith('.txt') || file.type === 'text/plain'){
+        if (file.size > MAX_TXT_BYTES) throw new Error('Archivo .txt > 5 MB.');
+        input.value = (await file.text()).slice(0, MAX_CHARS);
+        setFileStatus('Importado ✓');
+      } else if (name.endsWith('.docx')){
+        if (file.size > MAX_DOC_BYTES) throw new Error('Archivo .docx > 20 MB.');
+        await handleDocx(file);
+      } else if (name.endsWith('.pdf')){
+        if (file.size > MAX_DOC_BYTES) throw new Error('Archivo .pdf > 20 MB.');
+        await handlePdf(file);
+      } else {
+        throw new Error('Formato no admitido — usa .txt, .docx o .pdf.');
+      }
+      process();
+    } catch(err){
+      console.error(err);
+      setFileStatus(err.message || 'Error al importar el archivo.', true);
+    }
+  });
+
+  $('btnCopy').addEventListener('click', async () => {
+    if (!lastResult) return;
+    const payload = JSON.stringify(lastResult, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+      const btn = $('btnCopy'); const orig = btn.textContent;
+      btn.textContent = 'Copiado ✓'; setTimeout(() => btn.textContent = orig, 1200);
+    } catch(_) { alert('No se pudo copiar al portapapeles.'); }
+  });
+
+  $('btnDownload').addEventListener('click', () => {
+    if (!lastResult) return;
+    const r = lastResult;
+    const report = [
+      'INFORME DE TEXTO', '='.repeat(40),
+      'Escritura/locale: ' + r.locale,
+      'Palabras: ' + r.words,
+      'Caracteres: ' + r.chars,
+      'Caracteres sin espacios: ' + r.charsNS,
+      'Oraciones: ' + r.sentences,
+      'Párrafos: ' + r.paras,
+      'Palabras únicas: ' + r.unique,
+      'Densidad léxica: ' + r.density + '%',
+      'Longitud media de palabra: ' + r.avgLen,
+      'Tiempo de lectura: ' + r.readMin + ' min',
+      'Tiempo de habla: ' + r.speakMin + ' min',
+      '', 'Top tokens:',
+      ...r.top.map(([w,c]) => '  ' + w + ' — ' + c),
+    ].join('\n');
+    const blob = new Blob([report], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'informe-texto.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  process();
+})();
+</script>
+</body>
+</html>
