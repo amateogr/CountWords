@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://countswords.pages.dev/sitemap.xml

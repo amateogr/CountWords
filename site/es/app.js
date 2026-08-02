@@ -1,235 +1,3 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contador de palabras — multiidioma</title>
-<meta name="description" content="Contador de palabras y caracteres multiidioma: chino, japonés, coreano, árabe, tailandés, ruso y más. 100% local en tu navegador, ningún texto sale de tu dispositivo.">
-<link rel="canonical" href="https://countswords.pages.dev/">
-<meta property="og:title" content="Contador de palabras — multiidioma">
-<meta property="og:description" content="Analiza palabras, caracteres, oraciones y tiempo de lectura en cualquier idioma o escritura. Sin servidor, sin registro.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://countswords.pages.dev/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Contador de palabras — multiidioma">
-<meta name="twitter:description" content="100% local, funciona con cualquier idioma o escritura.">
-<meta name="robots" content="index, follow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-1:#EAF3FC; --bg-2:#F7FBFE;
-    --bg-panel:#FFFFFF; --bg-panel-2:#F1F8FD;
-    --ink:#2B3E52; --ink-soft:#5D7690; --ink-faint:#9AB0C4;
-    --border:#DCEBF7;
-    --accent:#4A90E2; --accent-soft:#EAF2FC; --accent-ink:#FFFFFF;
-    --accent-2:#5FB3A3; --danger:#D97B6C; --danger-bg:#FDEEEA;
-    --radius:18px; --radius-sm:12px; --radius-pill:999px;
-    --shadow:0 10px 30px rgba(74,144,226,.10);
-    --mono:'IBM Plex Mono', ui-monospace, monospace;
-    --sans:'Nunito', system-ui, -apple-system, sans-serif;
-    --display:'Quicksand', var(--sans);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
-    color:var(--ink);
-    font-family:var(--sans);
-    min-height:100vh;
-    padding:40px 24px 72px;
-    position:relative;
-    overflow-x:hidden;
-  }
-  body::before, body::after{
-    content:""; position:fixed; border-radius:50%; filter:blur(60px); z-index:0; pointer-events:none;
-  }
-  body::before{width:420px; height:420px; top:-140px; right:-100px; background:radial-gradient(circle, rgba(95,179,163,.20), transparent 70%);}
-  body::after{width:480px; height:480px; bottom:-180px; left:-140px; background:radial-gradient(circle, rgba(74,144,226,.16), transparent 70%);}
-  .wrap{max-width:1120px;margin:0 auto; position:relative; z-index:1;}
-
-  header.top{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:30px; flex-wrap:wrap;}
-  .eyebrow{
-    font-family:var(--sans); font-weight:700; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
-    color:var(--accent-2); margin:0 0 6px;
-  }
-  h1{
-    font-family:var(--display); font-weight:700; font-size:clamp(28px,3.6vw,40px);
-    margin:0; letter-spacing:-.01em; line-height:1.1; color:var(--ink);
-  }
-  .top-meta{font-family:var(--sans); font-weight:600; font-size:13px; color:var(--ink-soft); text-align:right; max-width:280px; line-height:1.5;}
-
-  .grid{display:grid; grid-template-columns:1.15fr .85fr; gap:22px;}
-  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
-
-  .panel{
-    background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
-    padding:22px; position:relative; box-shadow:var(--shadow);
-  }
-
-  .panel-label{
-    font-family:var(--sans); font-weight:700; font-size:12.5px; letter-spacing:.02em;
-    color:var(--ink-soft); display:flex; justify-content:space-between; margin-bottom:12px;
-  }
-  .panel-label .cap{color:var(--ink-faint); font-weight:600;}
-  .panel-label .cap.warn{color:var(--danger);}
-
-  textarea{
-    width:100%; min-height:360px; resize:vertical; border:1px solid var(--border); border-radius:var(--radius-sm);
-    background:var(--bg-panel-2); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.7;
-    padding:16px; outline:none; transition:box-shadow .2s ease, border-color .2s ease;
-  }
-  textarea::placeholder{color:var(--ink-faint);}
-  textarea:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft);}
-
-  .toolbar{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:center;}
-  button, select{
-    font-family:var(--sans); font-weight:700; font-size:13px; color:var(--ink);
-    background:var(--bg-panel-2); border:1px solid var(--border); border-radius:var(--radius-pill);
-    padding:9px 16px; cursor:pointer; transition:background .15s ease, transform .1s ease;
-  }
-  button:hover{background:var(--accent-soft); border-color:var(--accent);}
-  button:active{transform:translateY(1px) scale(.98);}
-  button.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
-  button.primary:hover{background:#3E82D6;}
-  button.ghost{background:transparent;}
-  input[type=file]{display:none;}
-  select{appearance:none;}
-
-  .specimen{
-    display:flex; align-items:center; gap:14px; border:1px solid var(--border); border-radius:var(--radius-sm);
-    padding:12px 14px; background:var(--bg-panel-2); margin-bottom:18px; min-height:56px;
-  }
-  .specimen .glyphs{display:flex; gap:7px; font-family:var(--display); font-weight:600; font-size:19px; color:var(--accent);}
-  .specimen .glyphs span{
-    display:inline-flex; align-items:center; justify-content:center;
-    width:30px; height:30px; border-radius:50%; background:var(--accent-soft);
-  }
-  .specimen .meta{font-family:var(--sans); font-size:12px; font-weight:600; color:var(--ink-soft); line-height:1.5;}
-  .specimen .meta b{color:var(--ink); font-size:13.5px; display:block; font-family:var(--display); font-weight:700;}
-
-  .hero{display:flex; align-items:baseline; gap:10px; margin-bottom:20px;}
-  .hero .num{font-family:var(--display); font-weight:700; font-size:58px; letter-spacing:-.02em; line-height:1; color:var(--accent); font-variant-numeric:tabular-nums;}
-  .hero .lbl{font-family:var(--sans); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
-
-  .stats{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
-  .stat{background:var(--bg-panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px;}
-  .stat .v{font-family:var(--sans); font-size:19px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums;}
-  .stat .k{font-family:var(--sans); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); margin-top:3px;}
-
-  .freq{margin-top:20px;}
-  .freq-row{display:grid; grid-template-columns:88px 1fr 32px; align-items:center; gap:10px; margin-bottom:8px; font-family:var(--sans); font-size:12.5px; font-weight:600;}
-  .freq-row .w{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);}
-  .freq-bar-track{height:9px; background:var(--bg-panel-2); border-radius:var(--radius-pill); overflow:hidden;}
-  .freq-bar{height:100%; background:var(--accent-2); border-radius:var(--radius-pill);}
-  .freq-row .n{color:var(--ink-faint); text-align:right;}
-
-  .foot-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;}
-
-  .warning{
-    font-family:var(--sans); font-weight:600; font-size:12.5px; color:#A6503F; background:var(--danger-bg);
-    border:1px solid rgba(217,123,108,.35); border-radius:var(--radius-sm); padding:10px 12px; margin-top:10px; display:none;
-  }
-  .warning.show{display:block;}
-  .file-status{font-family:var(--sans); font-weight:600; font-size:12px; color:var(--ink-faint); align-self:center;}
-  .file-status.err{color:var(--danger);}
-
-  ::selection{background:var(--accent-soft); color:var(--accent);}
-  @media (prefers-reduced-motion:no-preference){
-    .hero .num, .stat .v{transition:opacity .15s ease;}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <header class="top">
-    <div>
-      <p class="eyebrow">Multiidioma · en tiempo real</p>
-      <h1>Contador de palabras</h1>
-    </div>
-    <div class="top-meta">100% local en tu navegador.<br>Ningún texto sale de este dispositivo.</div>
-  </header>
-
-  <div class="grid">
-
-    <!-- INPUT -->
-    <section class="panel">
-      <div class="panel-label">
-        <span>Texto de entrada</span>
-        <span class="cap" id="capLabel">0 / 500.000</span>
-      </div>
-      <textarea id="input" dir="auto" spellcheck="false" placeholder="Pega o escribe texto en cualquier idioma o escritura — latino, cirílico, árabe, hebreo, devanagari, han, kana, hangul, tailandés, lao, jemer, birmano…"></textarea>
-      <div class="toolbar">
-        <button class="ghost" id="btnImport" title="Admite .txt, .docx, .pdf">Importar archivo</button>
-        <input type="file" id="fileInput" accept=".txt,.docx,.pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf">
-        <span class="file-status" id="fileStatus"></span>
-        <button class="ghost" id="btnClear">Vaciar</button>
-        <select id="localeSelect" title="Forzar escritura/idioma para la segmentación">
-          <option value="auto">Auto-detectar escritura</option>
-          <option value="en">Latino — genérico (en)</option>
-          <option value="es">Latino — español (es)</option>
-          <option value="ja">Japonés — Han+Kana (ja)</option>
-          <option value="zh">Chino — Han (zh)</option>
-          <option value="ko">Coreano — Hangul (ko)</option>
-          <option value="th">Tailandés (th)</option>
-          <option value="lo">Lao (lo)</option>
-          <option value="km">Jemer (km)</option>
-          <option value="my">Birmano (my)</option>
-          <option value="ar">Árabe (ar)</option>
-          <option value="he">Hebreo (he)</option>
-          <option value="hi">Hindi — Devanagari (hi)</option>
-          <option value="ru">Ruso — cirílico (ru)</option>
-          <option value="el">Griego (el)</option>
-        </select>
-        <select id="wpmSelect" title="Velocidad de lectura de referencia">
-          <option value="0.75">Lectura lenta</option>
-          <option value="1" selected>Lectura normal</option>
-          <option value="1.3">Lectura rápida</option>
-        </select>
-      </div>
-      <div class="warning" id="warnBanner"></div>
-    </section>
-
-    <!-- OUTPUT -->
-    <section class="panel">
-      <div class="panel-label"><span>Resumen</span><span class="cap" id="engineLabel">Intl.Segmenter</span></div>
-
-      <div class="specimen" id="specimen">
-        <div class="glyphs" id="specimenGlyphs"><span>A</span><span>a</span><span>É</span><span>&</span></div>
-        <div class="meta"><b id="specimenName">Latino · genérico</b><span id="specimenLocale">auto → en · dir ltr</span></div>
-      </div>
-
-      <div class="hero"><span class="num" id="statWords">0</span><span class="lbl">palabras</span></div>
-
-      <div class="stats">
-        <div class="stat"><div class="v" id="statChars">0</div><div class="k">Caracteres</div></div>
-        <div class="stat"><div class="v" id="statCharsNS">0</div><div class="k">Sin espacios</div></div>
-        <div class="stat"><div class="v" id="statSentences">0</div><div class="k">Oraciones</div></div>
-        <div class="stat"><div class="v" id="statParas">0</div><div class="k">Párrafos</div></div>
-        <div class="stat"><div class="v" id="statUnique">0</div><div class="k">Palabras únicas</div></div>
-        <div class="stat"><div class="v" id="statDensity">0%</div><div class="k">Densidad léxica</div></div>
-        <div class="stat"><div class="v" id="statAvgLen">0</div><div class="k">Long. media/palabra</div></div>
-        <div class="stat"><div class="v" id="statReadTime">0 min</div><div class="k">Lectura</div></div>
-        <div class="stat"><div class="v" id="statSpeakTime">0 min</div><div class="k">Habla</div></div>
-      </div>
-
-      <div class="freq" id="freqWrap">
-        <div class="panel-label" style="margin-top:16px;"><span>Top tokens</span><span class="cap">frecuencia</span></div>
-        <div id="freqList"></div>
-      </div>
-
-      <div class="foot-actions">
-        <button class="primary" id="btnCopy">Copiar JSON</button>
-        <button class="ghost" id="btnDownload">Descargar informe .txt</button>
-      </div>
-    </section>
-
-  </div>
-</div>
-
-<script>
 (function(){
   'use strict';
 
@@ -239,11 +7,12 @@
   const MAX_DOC_BYTES = 20 * 1024 * 1024;  // 20MB para .docx/.pdf
   const MAX_PDF_PAGES = 500;   // cota anti "PDF bomb"
 
-  // Versiones fijadas (no "latest") — mitiga parcialmente riesgo de supply-chain.
-  // Producción: self-host + Subresource Integrity (SRI) sobre estos dos ficheros.
-  const MAMMOTH_URL = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js';
-  const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.min.mjs';
-  const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.min.mjs';
+  // Self-hosted: sin dependencia de terceros en runtime. Los ficheros vienen
+  // del paquete oficial de npm (mammoth@1.11.0 / pdfjs-dist@6.1.200), servidos
+  // same-origin — ya no hace falta SRI ni abrir el CSP a un CDN externo.
+  const MAMMOTH_URL = '/vendor/mammoth.browser.min.js';
+  const PDFJS_URL = '/vendor/pdf.min.mjs';
+  const PDFJS_WORKER_URL = '/vendor/pdf.worker.min.mjs';
 
   const $ = id => document.getElementById(id);
   const input = $('input'), localeSelect = $('localeSelect'), wpmSelect = $('wpmSelect');
@@ -570,6 +339,59 @@
     return mammothLoadPromise;
   }
 
+  function withTimeout(promise, ms, label){
+    return Promise.race([
+      promise,
+      new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' tardó más de ' + (ms/1000) + 's — abortado.')), ms))
+    ]);
+  }
+
+  // Escanea solo el Central Directory del ZIP (metadatos, sin descomprimir nada)
+  // para detectar zip bombs antes de invocar a mammoth.extractRawText().
+  // Hallazgo de pentest: un .docx de 50KB puede decodificar a 50MB+ en memoria
+  // sin este guard (mammoth no impone límite propio de tamaño descomprimido).
+  function checkZipBombRisk(arrayBuffer, opts = {}){
+    const MAX_TOTAL_UNCOMPRESSED = opts.maxTotal ?? 60 * 1024 * 1024; // 60MB
+    const MAX_RATIO = opts.maxRatio ?? 300;
+    const bytes = new Uint8Array(arrayBuffer);
+    const view = new DataView(arrayBuffer);
+    const EOCD_SIG = 0x06054b50, CD_SIG = 0x02014b50;
+    let eocdOffset = -1;
+    const searchStart = Math.max(0, bytes.length - 22 - 65535);
+    for (let i = bytes.length - 22; i >= searchStart; i--){
+      if (view.getUint32(i, true) === EOCD_SIG){ eocdOffset = i; break; }
+    }
+    if (eocdOffset === -1) return {risky:false, reason:'no-eocd'}; // lo rechazará el propio parser de mammoth
+
+    let offset = view.getUint32(eocdOffset + 16, true);
+    const cdEntryCount = view.getUint16(eocdOffset + 10, true);
+    let totalUncompressed = 0;
+
+    for (let n = 0; n < cdEntryCount; n++){
+      if (offset + 46 > bytes.length) break;
+      if (view.getUint32(offset, true) !== CD_SIG) break;
+      const compSize = view.getUint32(offset + 20, true);
+      const uncompSize = view.getUint32(offset + 24, true);
+      const nameLen = view.getUint16(offset + 28, true);
+      const extraLen = view.getUint16(offset + 30, true);
+      const commentLen = view.getUint16(offset + 32, true);
+
+      if (compSize === 0xFFFFFFFF || uncompSize === 0xFFFFFFFF){
+        return {risky:true, reason:'zip64 con tamaño no acotado — inusual en un .docx real'};
+      }
+      totalUncompressed += uncompSize;
+      const ratio = compSize > 0 ? uncompSize / compSize : (uncompSize > 0 ? Infinity : 0);
+      if (ratio > MAX_RATIO && uncompSize > 1024 * 1024){
+        return {risky:true, reason:'ratio de compresión ' + ratio.toFixed(0) + ':1 (' + (uncompSize/1024/1024).toFixed(1) + 'MB) — patrón de zip bomb'};
+      }
+      offset += 46 + nameLen + extraLen + commentLen;
+    }
+    if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED){
+      return {risky:true, reason:'contenido descomprimido total ' + (totalUncompressed/1024/1024).toFixed(1) + 'MB supera el límite'};
+    }
+    return {risky:false, reason:'ok'};
+  }
+
   let pdfjsLibPromise = null;
   function loadPdfjs(){
     if (pdfjsLibPromise) return pdfjsLibPromise;
@@ -583,10 +405,15 @@
   async function handleDocx(file){
     setFileStatus('Cargando motor .docx…');
     await loadMammoth();
-    setFileStatus('Extrayendo texto…');
+    setFileStatus('Analizando estructura del archivo…');
     const buf = await file.arrayBuffer();
+    const risk = checkZipBombRisk(buf);
+    if (risk.risky){
+      throw new Error('Archivo .docx rechazado por seguridad: ' + risk.reason);
+    }
+    setFileStatus('Extrayendo texto…');
     // extractRawText: solo texto de document.xml — no procesa macros/VBA ni objetos OLE incrustados.
-    const res = await window.mammoth.extractRawText({arrayBuffer: buf});
+    const res = await withTimeout(window.mammoth.extractRawText({arrayBuffer: buf}), 15000, 'Extracción .docx');
     input.value = res.value.slice(0, MAX_CHARS);
     setFileStatus('Importado ✓' + (res.messages && res.messages.length ? ' (con avisos de formato)' : ''));
   }
@@ -598,13 +425,15 @@
     const buf = await file.arrayBuffer();
     // getDocument + getTextContent: solo capa de extracción de texto. No se carga el
     // visor/canvas ni la sandbox de JavaScript embebido (pdf.sandbox.mjs nunca se importa),
-    // así que cualquier /JavaScript o /OpenAction del PDF queda sin ejecutar.
-    const doc = await pdfjsLib.getDocument({data: buf}).promise;
+    // así que cualquier /JavaScript o /OpenAction del PDF queda sin ejecutar (verificado con fuzzing).
+    const doc = await withTimeout(pdfjsLib.getDocument({data: buf, isEvalSupported: false}).promise, 15000, 'Apertura del PDF');
     const pageCount = Math.min(doc.numPages, MAX_PDF_PAGES);
     const out = [];
     for (let i = 1; i <= pageCount; i++){
-      const page = await doc.getPage(i);
-      const content = await page.getTextContent();
+      // hallazgo de pentest: un content stream Flate hostil puede tardar varios
+      // segundos en procesarse por página — cada página tiene su propio cortafuegos de tiempo.
+      const page = await withTimeout(doc.getPage(i), 15000, 'Carga de página ' + i);
+      const content = await withTimeout(page.getTextContent(), 15000, 'Extracción de texto de página ' + i);
       out.push(content.items.map(it => it.str).join(' '));
       if (i % 15 === 0) setFileStatus('Extrayendo texto… página ' + i + '/' + pageCount);
     }
@@ -613,6 +442,7 @@
       ? ('Truncado a ' + MAX_PDF_PAGES + ' de ' + doc.numPages + ' páginas.')
       : 'Importado ✓');
   }
+
 
   $('btnImport').addEventListener('click', () => $('fileInput').click());
   $('fileInput').addEventListener('change', async (e) => {
@@ -681,6 +511,3 @@
 
   process();
 })();
-</script>
-</body>
-</html>

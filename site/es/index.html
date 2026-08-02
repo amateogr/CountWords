@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contador de palabras — multiidioma</title>
+<meta name="description" content="Contador de palabras y caracteres multiidioma: chino, japonés, coreano, árabe, tailandés, ruso y más. 100% local en tu navegador, ningún texto sale de tu dispositivo.">
+<link rel="canonical" href="https://countswords.pages.dev/">
+<meta property="og:title" content="Contador de palabras — multiidioma">
+<meta property="og:description" content="Analiza palabras, caracteres, oraciones y tiempo de lectura en cualquier idioma o escritura. Sin servidor, sin registro.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://countswords.pages.dev/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Contador de palabras — multiidioma">
+<meta name="twitter:description" content="100% local, funciona con cualquier idioma o escritura.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Multiidioma · en tiempo real</p>
+      <h1>Contador de palabras</h1>
+    </div>
+    <div class="top-meta">100% local en tu navegador.<br>Ningún texto sale de este dispositivo.</div>
+  </header>
+
+  <div class="grid">
+
+    <!-- INPUT -->
+    <section class="panel">
+      <div class="panel-label">
+        <span>Texto de entrada</span>
+        <span class="cap" id="capLabel">0 / 500.000</span>
+      </div>
+      <textarea id="input" dir="auto" spellcheck="false" placeholder="Pega o escribe texto en cualquier idioma o escritura — latino, cirílico, árabe, hebreo, devanagari, han, kana, hangul, tailandés, lao, jemer, birmano…"></textarea>
+      <div class="toolbar">
+        <button class="ghost" id="btnImport" title="Admite .txt, .docx, .pdf">Importar archivo</button>
+        <input type="file" id="fileInput" accept=".txt,.docx,.pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf">
+        <span class="file-status" id="fileStatus"></span>
+        <button class="ghost" id="btnClear">Vaciar</button>
+        <select id="localeSelect" title="Forzar escritura/idioma para la segmentación">
+          <option value="auto">Auto-detectar escritura</option>
+          <option value="en">Latino — genérico (en)</option>
+          <option value="es">Latino — español (es)</option>
+          <option value="ja">Japonés — Han+Kana (ja)</option>
+          <option value="zh">Chino — Han (zh)</option>
+          <option value="ko">Coreano — Hangul (ko)</option>
+          <option value="th">Tailandés (th)</option>
+          <option value="lo">Lao (lo)</option>
+          <option value="km">Jemer (km)</option>
+          <option value="my">Birmano (my)</option>
+          <option value="ar">Árabe (ar)</option>
+          <option value="he">Hebreo (he)</option>
+          <option value="hi">Hindi — Devanagari (hi)</option>
+          <option value="ru">Ruso — cirílico (ru)</option>
+          <option value="el">Griego (el)</option>
+        </select>
+        <select id="wpmSelect" title="Velocidad de lectura de referencia">
+          <option value="0.75">Lectura lenta</option>
+          <option value="1" selected>Lectura normal</option>
+          <option value="1.3">Lectura rápida</option>
+        </select>
+      </div>
+      <div class="warning" id="warnBanner"></div>
+    </section>
+
+    <!-- OUTPUT -->
+    <section class="panel">
+      <div class="panel-label"><span>Resumen</span><span class="cap" id="engineLabel">Intl.Segmenter</span></div>
+
+      <div class="specimen" id="specimen">
+        <div class="glyphs" id="specimenGlyphs"><span>A</span><span>a</span><span>É</span><span>&</span></div>
+        <div class="meta"><b id="specimenName">Latino · genérico</b><span id="specimenLocale">auto → en · dir ltr</span></div>
+      </div>
+
+      <div class="hero"><span class="num" id="statWords">0</span><span class="lbl">palabras</span></div>
+
+      <div class="stats">
+        <div class="stat"><div class="v" id="statChars">0</div><div class="k">Caracteres</div></div>
+        <div class="stat"><div class="v" id="statCharsNS">0</div><div class="k">Sin espacios</div></div>
+        <div class="stat"><div class="v" id="statSentences">0</div><div class="k">Oraciones</div></div>
+        <div class="stat"><div class="v" id="statParas">0</div><div class="k">Párrafos</div></div>
+        <div class="stat"><div class="v" id="statUnique">0</div><div class="k">Palabras únicas</div></div>
+        <div class="stat"><div class="v" id="statDensity">0%</div><div class="k">Densidad léxica</div></div>
+        <div class="stat"><div class="v" id="statAvgLen">0</div><div class="k">Long. media/palabra</div></div>
+        <div class="stat"><div class="v" id="statReadTime">0 min</div><div class="k">Lectura</div></div>
+        <div class="stat"><div class="v" id="statSpeakTime">0 min</div><div class="k">Habla</div></div>
+      </div>
+
+      <div class="freq" id="freqWrap">
+        <div class="panel-label panel-label--freq"><span>Top tokens</span><span class="cap">frecuencia</span></div>
+        <div id="freqList"></div>
+      </div>
+
+      <div class="foot-actions">
+        <button class="primary" id="btnCopy">Copiar JSON</button>
+        <button class="ghost" id="btnDownload">Descargar informe .txt</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script defer data-domain="countswords.pages.dev" src="https://plausible.io/js/script.js"></script>
+</body>
+</html>
