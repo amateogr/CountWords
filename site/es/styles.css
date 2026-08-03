@@ -120,3 +120,26 @@
   @media (prefers-reduced-motion:no-preference){
     .hero .num, .stat .v{transition:opacity .15s ease;}
   }
+
+  details.help{
+    margin-top:24px; background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 22px; box-shadow:var(--shadow);
+  }
+  details.help summary{
+    cursor:pointer; font-family:var(--display); font-weight:700; font-size:15px; color:var(--ink);
+    list-style:none;
+  }
+  details.help summary::-webkit-details-marker{display:none;}
+  details.help summary::before{content:"+  "; color:var(--accent); font-weight:700;}
+  details.help[open] summary::before{content:"–  ";}
+  details.help .help-content{margin-top:12px; font-size:13.5px; line-height:1.7; color:var(--ink-soft);}
+  details.help .help-content p{margin:0 0 10px;}
+  details.help .help-content a{color:var(--accent); font-weight:700; text-decoration:none;}
+  details.help .help-content a:hover{text-decoration:underline;}
+
+  .wrap--narrow{max-width:720px;}
+  .legal-h2{font-family:var(--display); font-size:17px; margin:18px 0 6px;}
+  .legal-h2:first-child{margin-top:0;}
+  .back-link{margin-top:18px; font-family:var(--sans); font-weight:700;}
+  .back-link a{color:var(--accent); text-decoration:none;}
+  .back-link a:hover{text-decoration:underline;}
